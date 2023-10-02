@@ -141,27 +141,26 @@ void loop() {
 
             //step 5 : handling new bottle input 
                         
-            Serial.println("before slider open call");
+            //Serial.println("before slider open call");  //debug message
+
             bool is_slider_open = Slider_Open();
-             Serial.println("slider open  value " + String(is_slider_open));
+             //Serial.println("slider open  value " + String(is_slider_open));  //debug message
             if(is_slider_open) {
-                int col_arr[1] = {0};
-                int row_arr[1] = {1};
-                String message[1] = {"Put bottle inside.."};
-                display_message(col_arr, row_arr, message, true, 1);
+                int col_arr[2] = {0, 0};
+                int row_arr[2] = {1, 2};
+                String message[2] = {"Put bottle inside.." , "within 14 second !"};
+                display_message(col_arr, row_arr, message, true, 2);
 
-                int height = -1;
-                double weight = -1;
+                int height = -1;           //initializing Height
+                double weight = -1;       //initializing weight
+                double temp_weight = -1;  //initializing temporary weight 
                 String countdown_time = "";
-                long slider_close_previous_time = millis();
-                double temp_weight = -1;
-                while(millis() - slider_close_previous_time < 15000) {
-                     
-                    
 
-                    
-                    
-                    //count down logic
+                long slider_close_previous_time = millis();
+
+                while(millis() - slider_close_previous_time < 15000) {  
+
+                //count down logic displaying  in LCD screen (format second)
                     long time_difference = millis() - slider_close_previous_time;
 
                     if(time_difference >= 0 && time_difference <= 1000){
@@ -216,15 +215,13 @@ void loop() {
                     display_message(col_arr, row_arr, message, false, 1);
 
 
- 
-
                     int ir_value = IRarrayinfo();
                     
                     if(scale.is_ready()){
                         //Serial.println("Inside scale is ready"); //debug message 
                         temp_weight = round(scale.get_units(5));
                        }
-                    Serial.println(" temp weight :"+ String(temp_weight));
+                    //Serial.println(" temp weight :"+ String(temp_weight)); //debug message 
                     if(ir_value > -1 && temp_weight > 4){
                         height = ir_value;
                         weight = temp_weight;
@@ -316,12 +313,9 @@ void loop() {
                 }
 
             }
-            break;
-            
- 
-    // }
+            break;               
         
- }   
+    }   
 
 }
 
@@ -346,7 +340,7 @@ int IRarrayinfo(){
 
 
 void initialMsg(){
-    int col_arr[3] = {0, 0, 0};
+    int col_arr[3] = {0, 1, 1};
     int row_arr[3] = {0, 1, 2};
     String message[3] = {"__Save YOUR Planet__", "Put YOUR Phone", "Number to start.."};
     display_message(col_arr, row_arr, message, true, 3);
@@ -381,10 +375,10 @@ bool Slider_Close(){
     digitalWrite(MotorPins[3],LOW);
     delay(1000);
     while(digitalRead(SwitchPins[0])){
-    int col_arr[1] = {0};
-    int row_arr[1] = {2};
-    String message[1] = {"Slider Closing...!!"};
-    display_message(col_arr, row_arr, message, true, 1);
+    int col_arr[2] = {1, 1};
+    int row_arr[2] = {0, 1};
+    String message[2] = {" Warnning!!!!", "Slider Closing...!!"};
+    display_message(col_arr, row_arr, message, true, 2);
     }
     return Slider_Stop();
 }
