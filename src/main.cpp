@@ -85,17 +85,17 @@ void setup() {
     I2C_Keypad.begin();
     scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
 
-    //setting up arduino digital  pins  2,3,4,5 for IR sensors 
+    //setting up arduino digital  pins  2,3,4,5 for IR sensors  //debugmessage
     for(int i=0; i<4; i++){
         pinMode(IRpins[i], INPUT); 
     }
 
-    //setting up arduino digital pins 6,7,8,9 for motorDriver control
+    //setting up arduino digital pins 6,7,8,9 for motorDriver control //debug message
     for(int i=0; i<4; i++){
         pinMode(MotorPins[i], OUTPUT); 
     }
 
-    //setting up switch pins 12, 13 as INPUT_PULLUP
+    //setting up switch pins 12, 13 as INPUT_PULLUP  //debug message
     for(int i=0; i<2; i++){
         pinMode(SwitchPins[i], INPUT_PULLUP); 
     }
@@ -221,7 +221,7 @@ void loop() {
                     int ir_value = IRarrayinfo();
                     
                     if(scale.is_ready()){
-                        //Serial.println("Inside scale is ready");
+                        //Serial.println("Inside scale is ready"); //debug message 
                         temp_weight = round(scale.get_units(5));
                        }
                     Serial.println(" temp weight :"+ String(temp_weight));
@@ -304,7 +304,6 @@ void loop() {
             initialMsg();
             inputString="";
             set=numberCursorInitialPosition;
-           // Slider_Close();
             break;
 
         case '*':
@@ -320,60 +319,6 @@ void loop() {
             break;
             
  
- 
-    // Serial.println(digitalRead(SwitchPins[0]));
-
-    // if(!SwitchPinsValue[0]){
-    //     Slider_Stop();
-    //     inputString ="";
-    //     lcd.clear();
-    //     lcd.setCursor(0,1);
-    //     lcd.print("slider stopped!");
-    // }
-
-    // if(inputString == "101"){
-    //       SwitchPinsValue[0] = digitalRead(SwitchPins[0]);
-    //       if(!SwitchPinsValue[0] || SwitchPinsValue[0]){
-    //         Slider_Open();
-    //         delay(2000);
-    //         lcd.clear();
-    //         lcd.setCursor(0,1);
-    //         lcd.print("slider openning!!");
-    //         if(!SwitchPinsValue[0]){
-    //             Slider_Stop();
-    //             lcd.clear();
-    //             lcd.setCursor(0,1);
-    //             lcd.print("slider stopped!");
-    //             delay(200);
-    //             SwitchPinsValue[0] = 1;
-    //         }
-
-    //      } 
-            
-    // } 
-    // else if(inputString == "102"){
-    //      SwitchPinsValue[0] = digitalRead(SwitchPins[0]);
-    //       if(!SwitchPinsValue[0] || SwitchPinsValue[0]){
-    //         Slider_Close();
-    //         delay(3000);
-    //         lcd.clear();
-    //         lcd.setCursor(0,1);
-    //         lcd.print("slider Closing!!");
-    //         if(!SwitchPinsValue[0]){
-    //             Slider_Stop();
-
-    //             lcd.clear();
-    //             lcd.setCursor(0,1);
-    //             lcd.print("slider stopped!");
-    //             delay(200);
-    //             SwitchPinsValue[0] = 1;
-    //         }
-
-    //      }
-    // }
-    // else{
-
-    //     //initialMsg();
     // }
         
  }   
@@ -382,7 +327,7 @@ void loop() {
 
 int IRarrayinfo(){
     for(int i =0;i<4;i++ ){
-        IRsensorValue[i]=digitalRead(IRpins[i]); //updating array
+        IRsensorValue[i]=digitalRead(IRpins[i]); //updating array 
     }
 
     if(IRsensorValue[3] == 0 && IRsensorValue[2] == 0 && IRsensorValue[1] == 0 && IRsensorValue[0]== 0)
@@ -445,13 +390,13 @@ bool Slider_Close(){
 }
 
 bool Slider_Open(){
-     //Serial.println("inside slider open call");
+     //Serial.println("inside slider open call"); //debug message
     digitalWrite(MotorPins[2], LOW);
     digitalWrite(MotorPins[3], HIGH);
     delay(1000);
     
     while(digitalRead(SwitchPins[0])){
-        //Serial.println("inside slider open while");
+        //Serial.println("inside slider open while"); //debug message
         int col_arr[1] = {0};
         int row_arr[1] = {2};
         String message[1] = {"Slider Opening...!!"};
@@ -463,7 +408,7 @@ bool Slider_Open(){
 }
 
 bool Slider_Stop(){
-     Serial.println("inside slider stop");
+    //Serial.println("inside slider stop"); //debug message 
     digitalWrite(MotorPins[2],LOW);
     digitalWrite(MotorPins[3],LOW);
     delay(1000);
