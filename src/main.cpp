@@ -18,6 +18,12 @@ String Entered_NUm = "";
 int set = numberCursorInitialPosition;
 float WeightDisplay = 0;
 String IRinfo ="";
+int height = -1;           //initializing Height for storing height of object
+double weight = -1;        //initializing weight for storing weight of object
+
+
+bool flip_right_state = false;
+bool flip_left_state = false;
 
 // HX711 circuit wiring
 const int LOADCELL_DOUT_PIN = 10;
@@ -64,13 +70,18 @@ Keypad_I2C I2C_Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS, keypad_ad
 
 
 bool is_valid_number(String entered_number);
+bool is_plastic();
+
 void display_message(int col_num[4], int row_num[4], String message[4], bool lcd_clear_flag, int lines);
 int IRarrayinfo();
 void initialMsg();
+void processing_msg();
+void weight_height_display();
+bool weight_reset();
 
-void Flip_Right();
-void flip_Left();
-void flip_Stop();
+bool flip_Right();
+bool flip_Left();
+bool flip_Stop();
 
 bool Slider_Open();
 bool Slider_Close();
@@ -146,14 +157,13 @@ void loop() {
             bool is_slider_open = Slider_Open();
              //Serial.println("slider open  value " + String(is_slider_open));  //debug message
             if(is_slider_open) {
+                weight_reset();
                 int col_arr[2] = {0, 0};
                 int row_arr[2] = {1, 2};
                 String message[2] = {"Put bottle inside.." , "within 14 second !"};
                 display_message(col_arr, row_arr, message, true, 2);
 
-                int height = -1;           //initializing Height
-                double weight = -1;       //initializing weight
-                double temp_weight = -1;  //initializing temporary weight 
+                double temp_weight = -1;   //initializing temporary weight 
                 String countdown_time = "";
 
                 long slider_close_previous_time = millis();
@@ -225,22 +235,40 @@ void loop() {
                     if(ir_value > -1 && temp_weight > 4){
                         height = ir_value;
                         weight = temp_weight;
-                         Serial.println("height & weight " + String(height) +" "+ String(weight));
+                        //Serial.println("height & weight " + String(height) +" "+ String(weight)); //debug message 
                         break;
                     }
 
                 }
-
+                 
+                //door closing delay after object detection
+                delay(2000);
                 Slider_Close();
-            }
-            
-            // unsigned long pre_time = millis();
-            // IRinfo = IRarrayinfo();
-            // WeightDisplay = round(scale.get_units(5));
+                delay(1000);
+                processing_msg();
+                weight_height_display();
+                scale.tare();
 
-            // if((millis() - pre_time > 5000) && WeightDisplay <= 0 ){
-            //  Slider_Close();
-            // }
+
+                //selecting plastic or waste product
+                
+                
+                if(is_plastic()){
+                   flip_right_state = flip_Right();
+                    if(flip_right_state){
+                        flip_left_state = flip_Left();
+                    }
+
+                }
+                if(!is_plastic()){
+                   flip_left_state = flip_Left();
+                    if(flip_left_state){
+                        flip_right_state = flip_Right();
+                    }
+
+                }            
+            bool weight_reset();
+            }
             
             
         }
@@ -260,6 +288,7 @@ void loop() {
             inputString="";
             lcd.clear();
             initialMsg();
+            weight_reset();
 
         }
     }
@@ -271,9 +300,10 @@ void loop() {
             lcd.setCursor(0,0);
             lcd.print("Weight: ");
             if(scale.is_ready())
-                WeightDisplay = round(scale.get_units(5));
+                weight = round(scale.get_units(5));
             lcd.setCursor(8,0);
-            lcd.print(WeightDisplay);
+            lcd.print(weight);
+            flip_Right();
             break;
 
         case 'B':
@@ -283,24 +313,27 @@ void loop() {
             lcd.print("IR Reading: ");
             lcd.setCursor(12,0);
             lcd.print(IRarrayinfo());
+            flip_Left();
             break;
 
         case 'C':
-            inputString="";
             scale.tare();
             if(scale.is_ready())
-                WeightDisplay = round(scale.get_units(5));
+                weight = round(scale.get_units(5));
             lcd.clear();
             lcd.setCursor(0,0);
             lcd.print("Weight Reset: ");
             lcd.setCursor(14,0);
-            lcd.print(WeightDisplay);
+            lcd.print(weight);
+            
             break;
 
         case 'D':
             initialMsg();
             inputString="";
             set=numberCursorInitialPosition;
+            
+
             break;
 
         case '*':
@@ -348,25 +381,62 @@ void initialMsg(){
 }
 
 
-void Flip_Right(){ 
+bool flip_Right(){ 
     digitalWrite(MotorPins[0],HIGH);
     digitalWrite(MotorPins[1],LOW);
-    MotorOutputValue[0] = HIGH ;
-    MotorOutputValue[1] = LOW;
+    delay(700);
+    while(digitalRead(SwitchPins[1])){
+        int col_arr[1] = {0};
+        int row_arr[1] = {1};
+        String message[1] = {"going to plastic bin"};
+        display_message(col_arr, row_arr, message, true, 1);
+      
+    } 
+return flip_Stop();   
 }
 
-void flip_Left(){
+bool flip_Left(){
     digitalWrite(MotorPins[0],LOW);
     digitalWrite(MotorPins[1],HIGH);
-    MotorOutputValue[0] = LOW ;
-    MotorOutputValue[1] = HIGH;
+    delay(800);
+    while(digitalRead(SwitchPins[1])){
+        int col_arr[1] = {0};
+        int row_arr[1] = {1};
+        String message[1] = {"going to waste bin"};
+        display_message(col_arr, row_arr, message, true, 1);
+    }
+ return flip_Stop();
 }
 
-void flip_Stop(){
+bool flip_Stop(){
     digitalWrite(MotorPins[0],LOW);
     digitalWrite(MotorPins[1],LOW);
-    MotorOutputValue[0] = LOW ;
-    MotorOutputValue[1] = LOW;
+    delay(1000);
+    int col_arr[1] = {1};
+    int row_arr[1] = {1};
+    String message[1] = {"flipper stopped"};
+    display_message(col_arr, row_arr, message, true, 1);
+return true;
+}
+
+
+
+bool Slider_Open(){
+     //Serial.println("inside slider open call"); //debug message
+    digitalWrite(MotorPins[2], LOW);
+    digitalWrite(MotorPins[3], HIGH);
+    delay(1000);
+    
+    while(digitalRead(SwitchPins[0])){
+        //Serial.println("inside slider open while"); //debug message
+        int col_arr[1] = {0};
+        int row_arr[1] = {2};
+        String message[1] = {"Slider Opening...!!"};
+        display_message(col_arr, row_arr, message, true, 1);        
+       
+    }
+        
+    return Slider_Stop();
 }
 
 bool Slider_Close(){
@@ -383,31 +453,42 @@ bool Slider_Close(){
     return Slider_Stop();
 }
 
-bool Slider_Open(){
-     //Serial.println("inside slider open call"); //debug message
-    digitalWrite(MotorPins[2], LOW);
-    digitalWrite(MotorPins[3], HIGH);
-    delay(1000);
-    
-    while(digitalRead(SwitchPins[0])){
-        //Serial.println("inside slider open while"); //debug message
-        int col_arr[1] = {0};
-        int row_arr[1] = {2};
-        String message[1] = {"Slider Opening...!!"};
-        display_message(col_arr, row_arr, message, true, 1);
-       
-    }
-        
-    return Slider_Stop();
-}
-
 bool Slider_Stop(){
     //Serial.println("inside slider stop"); //debug message 
     digitalWrite(MotorPins[2],LOW);
     digitalWrite(MotorPins[3],LOW);
     delay(1000);
+    int col_arr[1] = {1};
+    int row_arr[1] = {1};
+    String message[1] = {"Slider stopped"};
+    display_message(col_arr, row_arr, message, true, 1);
+
     return true;
 }
+
+void display_message(int col_num[4], int row_num[4], String message[4], bool lcd_clear_flag, int lines){
+
+    if(lcd_clear_flag){
+        lcd.clear();
+    }
+
+    for(int i=0; i<lines; i++) {
+        lcd.setCursor(col_num[i], row_num[i]);
+        lcd.print(message[i]);
+
+    }
+    
+    
+}
+
+bool is_plastic(){
+    if(weight>1 && weight < 20 && height != -1){
+        return true;
+    }
+return false;
+}
+
+
 
 bool is_valid_number(String entered_number){
 
@@ -427,17 +508,31 @@ bool is_valid_number(String entered_number){
     return false;
 }
 
-void display_message(int col_num[4], int row_num[4], String message[4], bool lcd_clear_flag, int lines){
-
-    if(lcd_clear_flag){
-        lcd.clear();
-    }
-
-    for(int i=0; i<lines; i++) {
-        lcd.setCursor(col_num[i], row_num[i]);
-        lcd.print(message[i]);
-
-    }
-    
-    
+void processing_msg(){
+    int col_arr[1] = {0};
+    int row_arr[1] = {1};
+    String message[1] = {"processing..."};
+    display_message(col_arr, row_arr, message, true, 1);
 }
+  
+void weight_height_display(){
+    int col_arr[2] = {0, 0};
+    int row_arr[2] = {1, 2};
+    String message[2] = {"Height :" + String(height) , "weight :" + String(weight)};
+    display_message(col_arr, row_arr, message, true, 2);
+
+}
+
+bool weight_reset(){
+    scale.tare();
+    if(scale.is_ready())
+        weight = round(scale.get_units(5));
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("Weight Reset: ");
+    lcd.setCursor(14,0);
+    lcd.print(weight);
+
+return true;
+}
+    
