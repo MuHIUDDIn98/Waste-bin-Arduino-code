@@ -396,15 +396,7 @@ bool flip_Left(){
     digitalWrite(MotorPins[0],LOW);
     digitalWrite(MotorPins[1],HIGH);
     delay(1000);
-    while(!digitalRead(SwitchPins[1])){
-
-    }
-    // while(digitalRead(SwitchPins[1])){
-        
-    //     if(!digitalRead(SwitchPins[1])){
-    //         break;
-    //     }
-    // }
+    while(!digitalRead(SwitchPins[1])){}
     return flip_Stop();
 }
 
