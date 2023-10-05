@@ -256,16 +256,16 @@ void loop() {
                 
                 if(is_plastic()){
                    flip_right_state = flip_Right();
-                    if(flip_right_state){
-                        flip_left_state = flip_Left();
-                    }
+                    // if(flip_right_state){
+                    //     flip_left_state = flip_Left();
+                    // }
 
                 }
                 if(!is_plastic()){
                    flip_left_state = flip_Left();
-                    if(flip_left_state){
-                        flip_right_state = flip_Right();
-                    }
+                    // if(flip_left_state){
+                    //     flip_right_state = flip_Right();
+                    // }
 
                 }            
              weight_reset();
@@ -385,28 +385,27 @@ void initialMsg(){
 bool flip_Right(){ 
     digitalWrite(MotorPins[0],HIGH);
     digitalWrite(MotorPins[1],LOW);
-    delay(700);
-    while(digitalRead(SwitchPins[1])){
-        int col_arr[1] = {0};
-        int row_arr[1] = {1};
-        String message[1] = {"going to plastic bin"};
-        display_message(col_arr, row_arr, message, true, 1);
-      
-    } 
-return flip_Stop();   
+    delay(1000);
+    while(!digitalRead(SwitchPins[1])){}
+    delay(100);    
+    while(digitalRead(SwitchPins[1])){} 
+    return flip_Stop();
 }
 
 bool flip_Left(){
     digitalWrite(MotorPins[0],LOW);
     digitalWrite(MotorPins[1],HIGH);
-    delay(800);
-    while(digitalRead(SwitchPins[1])){
-        int col_arr[1] = {0};
-        int row_arr[1] = {1};
-        String message[1] = {"going to waste bin"};
-        display_message(col_arr, row_arr, message, true, 1);
+    delay(1000);
+    while(!digitalRead(SwitchPins[1])){
+
     }
- return flip_Stop();
+    // while(digitalRead(SwitchPins[1])){
+        
+    //     if(!digitalRead(SwitchPins[1])){
+    //         break;
+    //     }
+    // }
+    return flip_Stop();
 }
 
 bool flip_Stop(){
@@ -417,7 +416,7 @@ bool flip_Stop(){
     int row_arr[1] = {1};
     String message[1] = {"flipper stopped"};
     display_message(col_arr, row_arr, message, true, 1);
-return true;
+    return true;
 }
 
 
