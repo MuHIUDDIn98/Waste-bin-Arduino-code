@@ -127,6 +127,8 @@ void loop() {
     key = I2C_Keypad.getKey();
     inputChar = key;
     
+    Serial.println("Weight ");
+    Serial.println(weight); 
 
     if(key >= 48 && key <= 57){  
         
@@ -138,12 +140,12 @@ void loop() {
             lcd.write(key);
             inputString += (char)inputChar;
             set++;
-        }
+        }   
 
     } else if(key =='#'){
         
         Entered_NUm = inputString;
-        
+          weight_reset();
         if(is_valid_number(Entered_NUm) ){
 
             //to-do step 3 : calling server to get user data
@@ -157,7 +159,6 @@ void loop() {
             bool is_slider_open = Slider_Open();
              //Serial.println("slider open  value " + String(is_slider_open));  //debug message
             if(is_slider_open) {
-                weight_reset();
                 int col_arr[2] = {0, 0};
                 int row_arr[2] = {1, 2};
                 String message[2] = {"Put bottle inside.." , "within 14 second !"};
@@ -267,7 +268,7 @@ void loop() {
                     }
 
                 }            
-            bool weight_reset();
+             weight_reset();
             }
             
             
@@ -354,7 +355,7 @@ void loop() {
 
 int IRarrayinfo(){
     for(int i =0;i<4;i++ ){
-        IRsensorValue[i]=digitalRead(IRpins[i]); //updating array 
+        IRsensorValue[i]= digitalRead(IRpins[i]); //updating array 
     }
 
     if(IRsensorValue[3] == 0 && IRsensorValue[2] == 0 && IRsensorValue[1] == 0 && IRsensorValue[0]== 0)
