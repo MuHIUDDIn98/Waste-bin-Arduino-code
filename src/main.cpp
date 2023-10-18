@@ -33,6 +33,8 @@ const int LOADCELL_SCK_PIN = 11;
 int IRsensorValue[4] = {0,0,0,0};
 int IRpins[4] = {2,3,4,5};
 
+int slider_obstracle_pin = A3;
+
 //Motordriver pin defin
 uint8_t MotorOutputValue[4] = {LOW,LOW,LOW,LOW};
 int MotorPins[4] = {6,7,8,9};
@@ -51,8 +53,8 @@ char keys[ROWS][COLS] = {
 uint8_t empty[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 //Switchpins number
-uint8_t SwitchPinsValue[2]={1,1};
-uint8_t SwitchPins[2] ={12,13};
+uint8_t SwitchPinsValue[2] = {1, 1};
+uint8_t SwitchPins[2] = {12, 13};
 
 //Keypad pins connected to the I2C-Expander pins P0-P6
 byte rowPins[ROWS] = {0, 1, 2, 3};          // connect to the row pinouts of the keypad
@@ -72,7 +74,7 @@ Keypad_I2C I2C_Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS, keypad_ad
 bool is_valid_number(String entered_number);
 bool is_plastic();
 
-void display_message(int col_num[4], int row_num[4], String message[4], bool lcd_clear_flag, int lines);
+void display_message(int col_num[4], int row_num[4], String message[4], bool lcd_clear_flag, int lines); // for displaying msg in lcd 
 int IRarrayinfo();
 void initialMsg();
 void processing_msg();
@@ -110,6 +112,8 @@ void setup() {
     for(int i=0; i<2; i++){
         pinMode(SwitchPins[i], INPUT_PULLUP); 
     }
+    //slider obstracle pin 
+    pinMode(slider_obstracle_pin,INPUT);
 
     lcd.init();
     lcd.begin(20,4);
@@ -143,9 +147,8 @@ void loop() {
         }   
 
     } else if(key =='#'){
-        
-        Entered_NUm = inputString;
-          weight_reset();
+        weight_reset();
+        Entered_NUm = inputString;          
         if(is_valid_number(Entered_NUm) ){
 
             //to-do step 3 : calling server to get user data
@@ -163,6 +166,8 @@ void loop() {
                 int row_arr[2] = {1, 2};
                 String message[2] = {"Put bottle inside.." , "within 14 second !"};
                 display_message(col_arr, row_arr, message, true, 2);
+
+        
 
                 double temp_weight = -1;   //initializing temporary weight 
                 String countdown_time = "";
@@ -225,7 +230,21 @@ void loop() {
                     String message[1] = {countdown_time + "s"};
                     display_message(col_arr, row_arr, message, false, 1);
 
+                    if(!digitalRead(slider_obstracle_pin)){
+                        int col_arr[2] = {0, 0};
+                        int row_arr[2] = {1, 2};
+                        String message[2] = {"Please unblock door!", "Push the bottle!"};                        display_message(col_arr, row_arr, message, true, 2);
 
+                    }
+                    while (!digitalRead(slider_obstracle_pin))
+                    {}
+                    if(digitalRead(slider_obstracle_pin)){
+                    int col_arr[2] = {0, 0};
+                    int row_arr[2] = {1, 2};
+                    String message[2] = {"Put bottle inside.." , "within 14 second !"};
+                    display_message(col_arr, row_arr, message, false, 2);
+                    }
+                    
                     int ir_value = IRarrayinfo();
                     
                     if(scale.is_ready()){
@@ -248,27 +267,25 @@ void loop() {
                 delay(1000);
                 processing_msg();
                 weight_height_display();
-                scale.tare();
+                
+                if(digitalRead(slider_obstracle_pin)){
+                        int col_arr[2] = {0, 0};
+                        int row_arr[2] = {1, 2};
+                        String message[2] = {"Good job !!", "Order processing!!"}; 
+                        display_message(col_arr, row_arr, message, true, 2); 
 
+                    }
 
                 //selecting plastic or waste product
                 
                 
                 if(is_plastic()){
                    flip_right_state = flip_Right();
-                    // if(flip_right_state){
-                    //     flip_left_state = flip_Left();
-                    // }
 
                 }
                 if(!is_plastic()){
                    flip_left_state = flip_Left();
-                    // if(flip_left_state){
-                    //     flip_right_state = flip_Right();
-                    // }
-
                 }            
-             weight_reset();
             }
             
             
@@ -432,15 +449,43 @@ bool Slider_Open(){
 }
 
 bool Slider_Close(){
-    Serial.println("Inside slider closing ");
+    //Serial.println("Inside slider closing ");
+    
+    bool SLIDER_OBSTACLE_PIN_FLAG = false;
     digitalWrite(MotorPins[2],HIGH);
     digitalWrite(MotorPins[3],LOW);
     delay(1000);
     while(digitalRead(SwitchPins[0])){
-    int col_arr[2] = {1, 1};
-    int row_arr[2] = {0, 1};
-    String message[2] = {" Warnning!!!!", "Slider Closing...!!"};
-    display_message(col_arr, row_arr, message, true, 2);
+        int col_arr[2] = {1, 1};
+        int row_arr[2] = {0, 1};
+        String message[2] = {" Warnning!!!!", "Slider Closing...!!"};
+        display_message(col_arr, row_arr, message, true, 2);
+
+        if(!digitalRead(slider_obstracle_pin)){
+
+            digitalWrite(MotorPins[2],LOW);
+            digitalWrite(MotorPins[3],LOW);
+            delay(200);
+            int col_arr[1] = {0};
+            int row_arr[1] = {1};
+            String message[1] = {"Please unblock door!"};                       
+            display_message(col_arr, row_arr, message, true, 1);
+             
+            SLIDER_OBSTACLE_PIN_FLAG = true;
+
+        }
+
+        while (!digitalRead(slider_obstracle_pin)){}
+        
+        if(SLIDER_OBSTACLE_PIN_FLAG){
+
+            SLIDER_OBSTACLE_PIN_FLAG = false;
+            digitalWrite(MotorPins[2],HIGH);
+            digitalWrite(MotorPins[3],LOW);
+            delay(200); 
+        }
+
+
     }
     return Slider_Stop();
 }
@@ -449,7 +494,7 @@ bool Slider_Stop(){
     //Serial.println("inside slider stop"); //debug message 
     digitalWrite(MotorPins[2],LOW);
     digitalWrite(MotorPins[3],LOW);
-    delay(1000);
+    delay(200);
     int col_arr[1] = {1};
     int row_arr[1] = {1};
     String message[1] = {"Slider stopped"};
