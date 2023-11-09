@@ -31,11 +31,12 @@ const int LOADCELL_SCK_PIN = 11;
 
 //IR sensor value store and ir sensor pin defination for pinMode setup
 int IRsensorValue[4] = {0,0,0,0};
-int IRpins[4] = {2,3,4,5};
+int IRpins[4] = {14,15,16,17};
 
-int slider_obstracle_pin = A3;
+// slider limit switch pin 
+int slider_obstracle_pin = 2;
 
-//Motordriver pin defin
+//Motordriver pin define
 uint8_t MotorOutputValue[4] = {LOW,LOW,LOW,LOW};
 int MotorPins[4] = {6,7,8,9};
 
@@ -280,11 +281,14 @@ void loop() {
                 
                 
                 if(is_plastic()){
-                   flip_right_state = flip_Right();
+                  flip_Right();
+                  flip_Left();
+
 
                 }
                 if(!is_plastic()){
-                   flip_left_state = flip_Left();
+                  flip_Left();
+                  flip_Right();
                 }            
             }
             
@@ -372,18 +376,18 @@ void loop() {
 
 int IRarrayinfo(){
     for(int i =0;i<4;i++ ){
-        IRsensorValue[i]= digitalRead(IRpins[i]); //updating array 
+        IRsensorValue[i] = analogRead(IRpins[i]); //updating array  info analog read
     }
 
-    if(IRsensorValue[3] == 0 && IRsensorValue[2] == 0 && IRsensorValue[1] == 0 && IRsensorValue[0]== 0)
+    if(IRsensorValue[0] <=750 && IRsensorValue[1] <=750 && IRsensorValue[2] <=750 && IRsensorValue[3] <= 750)
         return 4;
-    else if(IRsensorValue[3] == 0 && IRsensorValue[2] == 0 && IRsensorValue[1] == 0 && IRsensorValue[0] == 1 )
+    else if(IRsensorValue[0] <=750 && IRsensorValue[1] <=750 && IRsensorValue[2] <=750 && IRsensorValue[3] >=750 )
         return 3;
-    else if(IRsensorValue[3] == 0 && IRsensorValue[2] == 0 && IRsensorValue[1] == 1 && IRsensorValue[0] == 1)
+    else if(IRsensorValue[0] <=750 && IRsensorValue[1] <=750 && IRsensorValue[2] >= 750 && IRsensorValue[3] >= 750)
         return 2;
-    else if(IRsensorValue[3] == 0 && IRsensorValue[2] == 1 && IRsensorValue[1] == 1 && IRsensorValue[0] == 1)
+    else if(IRsensorValue[0] <=750 && IRsensorValue[1] >=750 && IRsensorValue[2] >=750 && IRsensorValue[3] >=750)
         return 1;
-    else if(IRsensorValue[3] == 1 && IRsensorValue[2] == 1 && IRsensorValue[1] == 1 && IRsensorValue[0] == 1)
+    else if(IRsensorValue[0] >=750 && IRsensorValue[1] >=750 && IRsensorValue[2] >=750 && IRsensorValue[3] >=750)
         return 0;
     else
         return -1;
@@ -403,9 +407,8 @@ bool flip_Right(){
     digitalWrite(MotorPins[0],HIGH);
     digitalWrite(MotorPins[1],LOW);
     delay(1000);
-    while(!digitalRead(SwitchPins[1])){}
-    delay(100);    
-    while(digitalRead(SwitchPins[1])){} 
+    while(digitalRead(SwitchPins[1])){}
+    delay(100); 
     return flip_Stop();
 }
 
@@ -413,7 +416,7 @@ bool flip_Left(){
     digitalWrite(MotorPins[0],LOW);
     digitalWrite(MotorPins[1],HIGH);
     delay(1000);
-    while(!digitalRead(SwitchPins[1])){}
+    while(digitalRead(SwitchPins[1])){}
     return flip_Stop();
 }
 
