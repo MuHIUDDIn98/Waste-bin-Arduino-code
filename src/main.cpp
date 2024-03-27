@@ -26,19 +26,19 @@ bool flip_right_state = false;
 bool flip_left_state = false;
 
 // HX711 circuit wiring
-const int LOADCELL_DOUT_PIN = 10;
-const int LOADCELL_SCK_PIN = 11;
+const int LOADCELL_DOUT_PIN = 9;
+const int LOADCELL_SCK_PIN = 10;
 
 //IR sensor value store and ir sensor pin defination for pinMode setup
 int IRsensorValue[4] = {0,0,0,0};
 int IRpins[4] = {14,15,16,17};
 
 // slider limit switch pin 
-int slider_obstracle_pin = 2;
+int slider_obstracle_pin = 4;
 
 //Motordriver pin define
 uint8_t MotorOutputValue[4] = {LOW,LOW,LOW,LOW};
-int MotorPins[4] = {6,7,8,9};
+int MotorPins[4] = {5,6,7,8};
 
 //Keypad variables
 bool disableNumInput = false;
@@ -55,7 +55,7 @@ uint8_t empty[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 //Switchpins number
 uint8_t SwitchPinsValue[2] = {1, 1};
-uint8_t SwitchPins[2] = {12, 13};
+uint8_t SwitchPins[2] = {3,2};
 
 //Keypad pins connected to the I2C-Expander pins P0-P6
 byte rowPins[ROWS] = {0, 1, 2, 3};          // connect to the row pinouts of the keypad
@@ -98,8 +98,8 @@ void setup() {
     Serial.begin(9600);
     I2C_Keypad.begin();
     scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
-
-    //setting up arduino digital  pins  2,3,4,5 for IR sensors  //debugmessage
+    pinMode(13,OUTPUT);
+    //setting up arduino digital  pins  14,15,16,17 for IR sensors  //debugmessage
     for(int i=0; i<4; i++){
         pinMode(IRpins[i], INPUT); 
     }
@@ -107,7 +107,7 @@ void setup() {
     //setting up arduino digital pins 6,7,8,9 for motorDriver control //debug message
     for(int i=0; i<4; i++){
         pinMode(MotorPins[i], OUTPUT); 
-    }
+    } 
 
     //setting up switch pins 12, 13 as INPUT_PULLUP  //debug message
     for(int i=0; i<2; i++){
@@ -128,12 +128,9 @@ void setup() {
 } 
 
 void loop() {
-    
     key = I2C_Keypad.getKey();
     inputChar = key;
-    
-    Serial.println("Weight ");
-    Serial.println(weight); 
+     
 
     if(key >= 48 && key <= 57){  
         
@@ -231,18 +228,22 @@ void loop() {
                     String message[1] = {countdown_time + "s"};
                     display_message(col_arr, row_arr, message, false, 1);
 
+                    //slider obstracle IR
+
                     if(!digitalRead(slider_obstracle_pin)){
                         int col_arr[2] = {0, 0};
                         int row_arr[2] = {1, 2};
-                        String message[2] = {"Please unblock door!", "Push the bottle!"};                        display_message(col_arr, row_arr, message, true, 2);
+                        String message[2] = {"Please unblock door!", "Push the bottle!"};                        
+                         display_message(col_arr, row_arr, message, true, 2);
 
                     }
                     while (!digitalRead(slider_obstracle_pin))
                     {}
+
                     if(digitalRead(slider_obstracle_pin)){
                     int col_arr[2] = {0, 0};
                     int row_arr[2] = {1, 2};
-                    String message[2] = {"Put bottle inside.." , "within 14 second !"};
+                    String message[2] = {"Processing... " , "please wait"};
                     display_message(col_arr, row_arr, message, false, 2);
                     }
                     
@@ -282,12 +283,13 @@ void loop() {
                 
                 if(is_plastic()){
                   flip_Right();
+                  delay(500);
                   flip_Left();
-
 
                 }
                 if(!is_plastic()){
                   flip_Left();
+                  delay(500);
                   flip_Right();
                 }            
             }
@@ -301,7 +303,7 @@ void loop() {
                 
                 int col_arr[1] = {0};
                 int row_arr[1] = {3};
-                String message[1] = {"Invalid number!!"};
+                String message[1] = {"Invalid User!!"};
                 display_message(col_arr, row_arr, message, false, 1);
             }
             
@@ -325,7 +327,6 @@ void loop() {
                 weight = round(scale.get_units(5));
             lcd.setCursor(8,0);
             lcd.print(weight);
-            flip_Right();
             break;
 
         case 'B':
@@ -335,7 +336,7 @@ void loop() {
             lcd.print("IR Reading: ");
             lcd.setCursor(12,0);
             lcd.print(IRarrayinfo());
-            flip_Left();
+            //flip_Left();
             break;
 
         case 'C':
@@ -379,15 +380,15 @@ int IRarrayinfo(){
         IRsensorValue[i] = analogRead(IRpins[i]); //updating array  info analog read
     }
 
-    if(IRsensorValue[0] <=750 && IRsensorValue[1] <=750 && IRsensorValue[2] <=750 && IRsensorValue[3] <= 750)
+    if(IRsensorValue[0] <=650 && IRsensorValue[1] <=650 && IRsensorValue[2] <=650 && IRsensorValue[3] <= 650)
         return 4;
-    else if(IRsensorValue[0] <=750 && IRsensorValue[1] <=750 && IRsensorValue[2] <=750 && IRsensorValue[3] >=750 )
+    else if(IRsensorValue[0] <=650 && IRsensorValue[1] <=650 && IRsensorValue[2] <=650 && IRsensorValue[3] >=650 )
         return 3;
-    else if(IRsensorValue[0] <=750 && IRsensorValue[1] <=750 && IRsensorValue[2] >= 750 && IRsensorValue[3] >= 750)
+    else if(IRsensorValue[0] <=650 && IRsensorValue[1] <=650 && IRsensorValue[2] >= 650 && IRsensorValue[3] >=650)
         return 2;
-    else if(IRsensorValue[0] <=750 && IRsensorValue[1] >=750 && IRsensorValue[2] >=750 && IRsensorValue[3] >=750)
+    else if(IRsensorValue[0] <=650 && IRsensorValue[1] >=650 && IRsensorValue[2] >=650 && IRsensorValue[3] >=650)
         return 1;
-    else if(IRsensorValue[0] >=750 && IRsensorValue[1] >=750 && IRsensorValue[2] >=750 && IRsensorValue[3] >=750)
+    else if(IRsensorValue[0] >=650 && IRsensorValue[1] >=650 && IRsensorValue[2] >=650 && IRsensorValue[3] >=650)
         return 0;
     else
         return -1;
@@ -402,20 +403,21 @@ void initialMsg(){
 
 }
 
-
+ 
 bool flip_Right(){ 
     digitalWrite(MotorPins[0],HIGH);
     digitalWrite(MotorPins[1],LOW);
-    delay(1000);
-    while(digitalRead(SwitchPins[1])){}
-    delay(100); 
+    while(!digitalRead(SwitchPins[1])){} 
+    delay(100);
+    while(digitalRead(SwitchPins[1])){} 
     return flip_Stop();
 }
 
 bool flip_Left(){
     digitalWrite(MotorPins[0],LOW);
     digitalWrite(MotorPins[1],HIGH);
-    delay(1000);
+    while(!digitalRead(SwitchPins[1])){}
+    delay(100);
     while(digitalRead(SwitchPins[1])){}
     return flip_Stop();
 }
